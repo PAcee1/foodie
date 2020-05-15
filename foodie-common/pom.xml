@@ -13,11 +13,4 @@
 
     <artifactId>foodie-common</artifactId>
 
-    <dependencies>
-        <dependency>
-            <groupId>com.pacee1</groupId>
-            <artifactId>foodie-pojo</artifactId>
-            <version>1.0-SNAPSHOT</version>
-        </dependency>
-    </dependencies>
 </project>
