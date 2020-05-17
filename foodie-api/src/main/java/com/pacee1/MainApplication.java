@@ -1,5 +1,7 @@
 package com.pacee1;
 
+import org.springframework.context.annotation.ComponentScan;
+import tk.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
@@ -9,6 +11,10 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * @Classname MainApplication
  */
 @SpringBootApplication
+// tk Mybatis扫描Mapper
+@MapperScan(basePackages = "com.pacee1.mapper")
+// 扫描Component
+@ComponentScan(basePackages = {"com.pacee1","org.n3r.idworker"})
 public class MainApplication {
     public static void main(String[] args) {
         SpringApplication.run(MainApplication.class,args);
