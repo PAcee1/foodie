@@ -10,6 +10,8 @@ import com.pacee1.utils.MD5Utils;
 import org.n3r.idworker.Sid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Date;
 
@@ -32,6 +34,7 @@ public class UserServiceImpl implements UserService {
     private static final String USER_FACE = "http://www.pacee1.com//img/avatar.png";
 
     @Override
+    @Transactional(propagation = Propagation.SUPPORTS)
     public boolean queryUsernameIsExist(String username) {
         Users users = new Users();
         users.setUsername(username);
@@ -40,6 +43,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional(propagation = Propagation.REQUIRED)
     public Users createUser(UserBO userBO) {
         Users users = new Users();
         // 设置各种属性
@@ -66,6 +70,21 @@ public class UserServiceImpl implements UserService {
         // 保存
         usersMapper.insert(users);
         return users;
+    }
+
+    @Override
+    @Transactional(propagation = Propagation.SUPPORTS)
+    public Users queryUserForLogin(String username, String password) {
+        Users users = new Users();
+        users.setUsername(username);
+        try {
+            users.setPassword(MD5Utils.getMD5Str(password));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        Users result = usersMapper.selectOne(users);
+        return result;
     }
 
 }
