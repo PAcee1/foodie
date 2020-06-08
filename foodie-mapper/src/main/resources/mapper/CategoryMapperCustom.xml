@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.pacee1.mapper.CategoryMapperCustom" >
+    <resultMap id="resultMap" type="com.pacee1.pojo.vo.CategoryVO" >
+        <id column="id" property="id" />
+        <result column="name" property="name"/>
+        <result column="type" property="type"/>
+        <result column="father_id" property="fatherId" />
+        <collection property="subCatList" ofType="com.pacee1.pojo.vo.SubCategoryVO">
+            <id column="subId" property="subId" />
+            <result column="subName" property="subName"/>
+            <result column="subType" property="subType"/>
+            <result column="subFatherId" property="subFatherId" />
+        </collection>
+    </resultMap>
+
+    <resultMap id="newItemsMap" type="com.pacee1.pojo.vo.NewItemsVO" >
+        <id column="rootCatId" property="rootCatId" />
+        <result column="rootCatName" property="rootCatName"/>
+        <result column="slogan" property="slogan"/>
+        <result column="catImage" property="catImage" />
+        <result column="bgColor" property="bgColor" />
+        <collection property="simpleItemList" ofType="com.pacee1.pojo.vo.SimpleItemVO">
+            <id column="itemId" property="itemId" />
+            <result column="itemName" property="itemName"/>
+            <result column="itemUrl" property="itemUrl"/>
+        </collection>
+    </resultMap>
+  
+    <select id="getSubCatList" parameterType="java.lang.Integer" resultMap="resultMap">
+    SELECT
+        f.id AS id,
+        f.`name` AS `name`,
+        f.type AS type,
+        f.father_id AS fatherId,
+        c.id AS subId,
+        c.`name` AS subName,
+        c.type AS subType,
+        c.father_id AS subFatherId
+    FROM
+        category f
+    LEFT JOIN category c ON f.id = c.father_id
+    WHERE
+        f.father_id = #{fatherId}
+    </select>
+
+    <select id="getSixNewItemsLazy" parameterType="java.lang.Integer" resultMap="newItemsMap">
+        SELECT
+            c.id AS rootCatId,
+            c.`name` AS rootCatName,
+            c.slogan AS slogan,
+            c.cat_image AS catImage,
+            c.bg_color AS bgColor,
+            i.id AS itemId,
+            i.item_name AS itemName,
+            ii.url AS itemUrl,
+            i.created_time AS createTime
+        FROM
+            category c
+        LEFT JOIN items i ON c.id = i.root_cat_id
+        LEFT JOIN items_img ii ON i.id = ii.item_id
+        WHERE
+            c.type = 1
+        AND c.id = #{fatherId}
+        AND ii.is_main = 1
+        ORDER BY
+            i.created_time DESC
+        LIMIT 0,6
+  </select>
+</mapper>

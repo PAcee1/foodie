@@ -33,6 +33,11 @@ public class UserServiceImpl implements UserService {
     // 默认头像地址
     private static final String USER_FACE = "http://www.pacee1.com//img/avatar.png";
 
+    /**
+     * 查询已存在的用户名
+     * @param username
+     * @return
+     */
     @Override
     @Transactional(propagation = Propagation.SUPPORTS)
     public boolean queryUsernameIsExist(String username) {
@@ -42,6 +47,11 @@ public class UserServiceImpl implements UserService {
         return result == null ? false : true;
     }
 
+    /**
+     * 创建用户
+     * @param userBO
+     * @return
+     */
     @Override
     @Transactional(propagation = Propagation.REQUIRED)
     public Users createUser(UserBO userBO) {
@@ -72,6 +82,12 @@ public class UserServiceImpl implements UserService {
         return users;
     }
 
+    /**
+     * 查询用户
+     * @param username
+     * @param password
+     * @return
+     */
     @Override
     @Transactional(propagation = Propagation.SUPPORTS)
     public Users queryUserForLogin(String username, String password) {
