@@ -1,9 +1,17 @@
 package com.pacee1.service.impl;
 
+import com.github.pagehelper.PageHelper;
+import com.github.pagehelper.PageInfo;
+import com.pacee1.enums.CommentLevel;
 import com.pacee1.mapper.*;
 import com.pacee1.pojo.*;
+import com.pacee1.pojo.vo.CommentLevelCountsVO;
+import com.pacee1.pojo.vo.ItemCommentVO;
+import com.pacee1.pojo.vo.SearchItemsVO;
 import com.pacee1.service.CarouselService;
 import com.pacee1.service.ItemService;
+import com.pacee1.utils.DesensitizationUtil;
+import com.pacee1.utils.PagedGridResult;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -28,6 +36,10 @@ public class ItemsServiceImpl implements ItemService {
     private ItemsImgMapper itemsImgMapper;
     @Autowired
     private ItemsParamMapper itemsParamMapper;
+    @Autowired
+    private ItemsCommentsMapper itemsCommentsMapper;
+    @Autowired
+    private ItemsCommentsMapperCustom itemsCommentsMapperCustom;
 
     @Override
     @Transactional(propagation = Propagation.SUPPORTS)
@@ -60,5 +72,89 @@ public class ItemsServiceImpl implements ItemService {
         Example.Criteria criteria = example.createCriteria();
         criteria.andEqualTo("itemId",itemId);
         return itemsParamMapper.selectOneByExample(example);
+    }
+
+    @Override
+    @Transactional(propagation = Propagation.SUPPORTS)
+    public CommentLevelCountsVO queryCommentCounts(String itemId) {
+        Integer goodCounts = getCommentCountsByLevel(itemId, CommentLevel.GOOD.type);
+        Integer normalCounts = getCommentCountsByLevel(itemId, CommentLevel.NORMAL.type);
+        Integer badCounts = getCommentCountsByLevel(itemId, CommentLevel.BAD.type);
+        // 总平均数
+        Integer totalCounts = goodCounts + normalCounts + badCounts;
+
+        CommentLevelCountsVO result = new CommentLevelCountsVO();
+        result.setGoodCounts(goodCounts);
+        result.setNormalCounts(normalCounts);
+        result.setBadCounts(badCounts);
+        result.setTotalCounts(totalCounts);
+
+        return result;
+    }
+
+    @Override
+    @Transactional(propagation = Propagation.SUPPORTS)
+    public PagedGridResult queryItemComments(String itemId, Integer level, Integer page, Integer size) {
+        // 分页
+        PageHelper.startPage(page,size);
+
+        List<ItemCommentVO> commentVOS = itemsCommentsMapperCustom.queryItemComments(itemId, level);
+        // 对用户名脱敏
+        for (ItemCommentVO commentVO : commentVOS) {
+            commentVO.setNickname(DesensitizationUtil.commonDisplay(commentVO.getNickname()));
+        }
+
+        return setPagedGridResult(commentVOS,page);
+    }
+
+    @Override
+    public PagedGridResult searchItems(String keyword, String sort, Integer page, Integer size) {
+        // 分页
+        PageHelper.startPage(page,size);
+
+        List<SearchItemsVO> list = itemsCommentsMapperCustom.searchItems(keyword, sort);
+
+        return setPagedGridResult(list,page);
+    }
+
+    @Override
+    public PagedGridResult searchItemsByCat(Integer catId, String sort, Integer page, Integer size) {
+        // 分页
+        PageHelper.startPage(page,size);
+
+        List<SearchItemsVO> list = itemsCommentsMapperCustom.searchItemsByCat(catId, sort);
+
+        return setPagedGridResult(list,page);
+    }
+
+    /**
+     * 获取各个等级评价数
+     * @param itemId
+     * @param level
+     * @return
+     */
+    private Integer getCommentCountsByLevel(String itemId,Integer level){
+        ItemsComments itemsComments = new ItemsComments();
+        itemsComments.setItemId(itemId);
+        itemsComments.setCommentLevel(level);
+
+        return itemsCommentsMapper.selectCount(itemsComments);
+    }
+
+    /**
+     * 封装分页结果
+     * @param list
+     * @param page
+     * @return
+     */
+    private PagedGridResult setPagedGridResult(List<?> list,Integer page){
+        PageInfo<?> pageInfo = new PageInfo<>(list);
+        PagedGridResult result = new PagedGridResult();
+        result.setPage(page);
+        result.setRows(list);
+        result.setRecords(pageInfo.getTotal());
+        result.setTotal(pageInfo.getPages());
+
+        return result;
     }
 }

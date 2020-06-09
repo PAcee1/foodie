@@ -49,3 +49,7 @@ mapper:
  mappers: com.pacee1.my.mapper.MyMapper
  not-empty: false # 当使用动态sql时，如果有name != null，会自动添加name != '' 不需要
  identity: MYSQL
+# 分页插件配置
+pagehelper:
+ helperDialect: mysql
+ supportMethodsArguments: true
