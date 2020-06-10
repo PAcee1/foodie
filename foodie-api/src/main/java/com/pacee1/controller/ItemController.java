@@ -2,10 +2,7 @@ package com.pacee1.controller;
 
 import com.pacee1.enums.YesOrNo;
 import com.pacee1.pojo.*;
-import com.pacee1.pojo.vo.CategoryVO;
-import com.pacee1.pojo.vo.CommentLevelCountsVO;
-import com.pacee1.pojo.vo.ItemInfoVO;
-import com.pacee1.pojo.vo.NewItemsVO;
+import com.pacee1.pojo.vo.*;
 import com.pacee1.service.CarouselService;
 import com.pacee1.service.CategoryService;
 import com.pacee1.service.ItemService;
@@ -145,6 +142,19 @@ public class ItemController {
 
         PagedGridResult result = itemService.searchItemsByCat(catId, sort, page, pageSize);
 
+        return ResponseResult.ok(result);
+    }
+
+    @GetMapping("/refresh")
+    @ApiOperation(value = "购物车页面，根据商品规格id刷新最新商品信息",notes = "购物车页面，根据商品规格id刷新最新商品信息")
+    public ResponseResult refresh(
+            @ApiParam(name = "itemSpecIds",value = "商品规格ids",required = true)
+            @RequestParam String itemSpecIds){
+        if(itemSpecIds == null){
+            return ResponseResult.errorMsg(null);
+        }
+
+        List<ShopcartVO> result = itemService.queryItemsBySpecIds(itemSpecIds);
         return ResponseResult.ok(result);
     }
 }

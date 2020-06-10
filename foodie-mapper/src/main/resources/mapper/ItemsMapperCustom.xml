@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
-<mapper namespace="com.pacee1.mapper.ItemsCommentsMapperCustom" >
+<mapper namespace="com.pacee1.mapper.ItemsMapperCustom" >
 
   <select id="queryItemComments" resultType="com.pacee1.pojo.vo.ItemCommentVO">
     SELECT
@@ -97,5 +97,26 @@
             </otherwise>
         </choose>
 
+    </select>
+
+    <select id="queryItemsBySpecIds" resultType="com.pacee1.pojo.vo.ShopcartVO">
+        SELECT
+            i.id AS itemId,
+            ii.url AS itemImgUrl,
+            i.item_name AS itemName,
+            isc.id AS specId,
+            isc.`name` AS specName,
+            isc.price_discount AS priceDiscount,
+            isc.price_normal AS priceNormal
+        FROM
+            items_spec isc
+        LEFT JOIN items i ON isc.item_id = i.id
+        LEFT JOIN items_img ii ON isc.item_id = ii.item_id
+        WHERE
+            ii.is_main = 1
+        AND isc.id IN
+        <foreach collection="specIdsList" index="index" item="spec" open="(" separator="," close=")">
+            #{spec}
+        </foreach>
     </select>
 </mapper>

@@ -8,7 +8,7 @@ import com.pacee1.pojo.*;
 import com.pacee1.pojo.vo.CommentLevelCountsVO;
 import com.pacee1.pojo.vo.ItemCommentVO;
 import com.pacee1.pojo.vo.SearchItemsVO;
-import com.pacee1.service.CarouselService;
+import com.pacee1.pojo.vo.ShopcartVO;
 import com.pacee1.service.ItemService;
 import com.pacee1.utils.DesensitizationUtil;
 import com.pacee1.utils.PagedGridResult;
@@ -18,6 +18,8 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import tk.mybatis.mapper.entity.Example;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -39,7 +41,7 @@ public class ItemsServiceImpl implements ItemService {
     @Autowired
     private ItemsCommentsMapper itemsCommentsMapper;
     @Autowired
-    private ItemsCommentsMapperCustom itemsCommentsMapperCustom;
+    private ItemsMapperCustom itemsMapperCustom;
 
     @Override
     @Transactional(propagation = Propagation.SUPPORTS)
@@ -98,7 +100,7 @@ public class ItemsServiceImpl implements ItemService {
         // 分页
         PageHelper.startPage(page,size);
 
-        List<ItemCommentVO> commentVOS = itemsCommentsMapperCustom.queryItemComments(itemId, level);
+        List<ItemCommentVO> commentVOS = itemsMapperCustom.queryItemComments(itemId, level);
         // 对用户名脱敏
         for (ItemCommentVO commentVO : commentVOS) {
             commentVO.setNickname(DesensitizationUtil.commonDisplay(commentVO.getNickname()));
@@ -112,7 +114,7 @@ public class ItemsServiceImpl implements ItemService {
         // 分页
         PageHelper.startPage(page,size);
 
-        List<SearchItemsVO> list = itemsCommentsMapperCustom.searchItems(keyword, sort);
+        List<SearchItemsVO> list = itemsMapperCustom.searchItems(keyword, sort);
 
         return setPagedGridResult(list,page);
     }
@@ -122,9 +124,20 @@ public class ItemsServiceImpl implements ItemService {
         // 分页
         PageHelper.startPage(page,size);
 
-        List<SearchItemsVO> list = itemsCommentsMapperCustom.searchItemsByCat(catId, sort);
+        List<SearchItemsVO> list = itemsMapperCustom.searchItemsByCat(catId, sort);
 
         return setPagedGridResult(list,page);
+    }
+
+    @Override
+    public List<ShopcartVO> queryItemsBySpecIds(String specIds) {
+        // 分隔ids，组装成集合
+        String[] strings = specIds.split(",");
+        List list = new ArrayList();
+        Collections.addAll(list,strings);
+
+        List<ShopcartVO> shopcartVOS = itemsMapperCustom.queryItemsBySpecIds(list);
+        return shopcartVOS;
     }
 
     /**

@@ -7,6 +7,7 @@ import com.pacee1.pojo.ItemsSpec;
 import com.pacee1.pojo.vo.CommentLevelCountsVO;
 import com.pacee1.pojo.vo.ItemCommentVO;
 import com.pacee1.pojo.vo.SearchItemsVO;
+import com.pacee1.pojo.vo.ShopcartVO;
 import com.pacee1.utils.PagedGridResult;
 import org.apache.ibatis.annotations.Param;
 
@@ -83,4 +84,11 @@ public interface ItemService {
      * @return
      */
     PagedGridResult searchItemsByCat(Integer catId, String sort, Integer page, Integer size);
+
+    /**
+     * 根据商品规格id查询商品
+     * @param specIds
+     * @return
+     */
+    List<ShopcartVO> queryItemsBySpecIds(String specIds);
 }

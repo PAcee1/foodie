@@ -2,11 +2,12 @@ package com.pacee1.mapper;
 
 import com.pacee1.pojo.vo.ItemCommentVO;
 import com.pacee1.pojo.vo.SearchItemsVO;
+import com.pacee1.pojo.vo.ShopcartVO;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
-public interface ItemsCommentsMapperCustom {
+public interface ItemsMapperCustom {
 
     /**
      * 查询商品评价
@@ -31,4 +32,11 @@ public interface ItemsCommentsMapperCustom {
      * @return
      */
     List<SearchItemsVO> searchItemsByCat(@Param("catId")Integer catId, @Param("sort") String sort);
+
+    /**
+     * 根据规格id获取商品信息列表
+     * @param specIdsList
+     * @return
+     */
+    List<ShopcartVO> queryItemsBySpecIds(@Param("specIdsList")List specIdsList);
 }
