@@ -1,9 +1,7 @@
 package com.pacee1.service;
 
 import com.pacee1.pojo.UserAddress;
-import com.pacee1.pojo.Users;
 import com.pacee1.pojo.bo.UserAddressBO;
-import com.pacee1.pojo.bo.UserBO;
 
 import java.util.List;
 
@@ -30,4 +28,6 @@ public interface AddressService {
     void delete(String userId,String addressId);
 
     void setDefaultAddress(String userId,String addressId);
+
+    UserAddress queryById(String addressId);
 }

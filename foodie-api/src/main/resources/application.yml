@@ -53,3 +53,9 @@ mapper:
 pagehelper:
  helperDialect: mysql
  supportMethodsArguments: true
+
+# 支付相关配置
+pacee1:
+ pay:
+  returnUrl: http://raqpsv.natappfree.cc/orders/notifyMerchantOrderPaid
+  paymentUrl: http://payment.t.mukewang.com/foodie-payment/payment/createMerchantOrder

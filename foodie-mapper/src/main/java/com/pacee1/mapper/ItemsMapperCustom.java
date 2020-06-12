@@ -39,4 +39,12 @@ public interface ItemsMapperCustom {
      * @return
      */
     List<ShopcartVO> queryItemsBySpecIds(@Param("specIdsList")List specIdsList);
+
+    /**
+     * 简单使用乐观锁，减少库存防止超卖
+     * @param specId
+     * @param pendingCounts
+     * @return
+     */
+    Integer decreaseItemSpecStock(@Param("specId")String specId, @Param("pendingCounts") Integer pendingCounts);
 }

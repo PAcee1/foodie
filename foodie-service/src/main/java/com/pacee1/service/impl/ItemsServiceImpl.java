@@ -3,6 +3,7 @@ package com.pacee1.service.impl;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import com.pacee1.enums.CommentLevel;
+import com.pacee1.enums.YesOrNo;
 import com.pacee1.mapper.*;
 import com.pacee1.pojo.*;
 import com.pacee1.pojo.vo.CommentLevelCountsVO;
@@ -110,6 +111,7 @@ public class ItemsServiceImpl implements ItemService {
     }
 
     @Override
+    @Transactional(propagation = Propagation.SUPPORTS)
     public PagedGridResult searchItems(String keyword, String sort, Integer page, Integer size) {
         // 分页
         PageHelper.startPage(page,size);
@@ -120,6 +122,7 @@ public class ItemsServiceImpl implements ItemService {
     }
 
     @Override
+    @Transactional(propagation = Propagation.SUPPORTS)
     public PagedGridResult searchItemsByCat(Integer catId, String sort, Integer page, Integer size) {
         // 分页
         PageHelper.startPage(page,size);
@@ -130,6 +133,7 @@ public class ItemsServiceImpl implements ItemService {
     }
 
     @Override
+    @Transactional(propagation = Propagation.SUPPORTS)
     public List<ShopcartVO> queryItemsBySpecIds(String specIds) {
         // 分隔ids，组装成集合
         String[] strings = specIds.split(",");
@@ -138,6 +142,37 @@ public class ItemsServiceImpl implements ItemService {
 
         List<ShopcartVO> shopcartVOS = itemsMapperCustom.queryItemsBySpecIds(list);
         return shopcartVOS;
+    }
+
+    @Override
+    @Transactional(propagation = Propagation.SUPPORTS)
+    public ItemsSpec queryItemsSpec(String specId) {
+        return itemsSpecMapper.selectByPrimaryKey(specId);
+    }
+
+    @Override
+    @Transactional(propagation = Propagation.SUPPORTS)
+    public ItemsImg queryItemsImg(String itemId) {
+        ItemsImg itemsImg = new ItemsImg();
+        itemsImg.setIsMain(YesOrNo.YES.type);
+        itemsImg.setItemId(itemId);
+        return itemsImgMapper.selectOne(itemsImg);
+    }
+
+    @Override
+    @Transactional(propagation = Propagation.REQUIRED)
+    public void decreaseItemSpecStock(String specId, Integer buyCounts) {
+        /**
+         * 减少库存很关键，因为高并发场景下处理不当，就会出现超卖问题
+         * 1.使用synchronized 集群下无用
+         * 2.锁数据库，性能低下
+         * 3.分布式锁，zookeeper或redis
+         */
+        // TODO 需优化，当前使用乐观锁简单实现
+        Integer result = itemsMapperCustom.decreaseItemSpecStock(specId, buyCounts);
+        if(result != 1){
+            throw new RuntimeException("订单创建失败，库存不足");
+        }
     }
 
     /**
