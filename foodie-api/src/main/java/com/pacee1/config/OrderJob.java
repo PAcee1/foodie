@@ -29,7 +29,7 @@ public class OrderJob {
      *
      * 后期使用MQ来优化自动关闭任务（延时队列）
      */
-    @Scheduled(cron = "* * 0/1 * * ?")
+    @Scheduled(cron = "0 0 0/1 * * ? ")
     public void autoCloseOrder(){
         orderService.closeOrder();
         //System.out.println(new Date());
