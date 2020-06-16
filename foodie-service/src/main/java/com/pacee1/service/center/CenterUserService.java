@@ -19,4 +19,6 @@ public interface CenterUserService {
     Users queryUserInfo(String userId);
 
     Users updateUserInfo(String userId, CenterUserBO userBO);
+
+    Users updateUserFace(String userId,String faceUrl);
 }
