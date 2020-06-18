@@ -10,7 +10,7 @@
     <result column="item_id" property="itemId" jdbcType="VARCHAR" />
     <result column="item_name" property="itemName" jdbcType="VARCHAR" />
     <result column="item_spec_id" property="itemSpecId" jdbcType="VARCHAR" />
-    <result column="sepc_name" property="sepcName" jdbcType="VARCHAR" />
+    <result column="spec_name" property="specName" jdbcType="VARCHAR" />
     <result column="comment_level" property="commentLevel" jdbcType="INTEGER" />
     <result column="content" property="content" jdbcType="VARCHAR" />
     <result column="created_time" property="createdTime" jdbcType="TIMESTAMP" />

@@ -94,14 +94,14 @@ public class MyOrderServiceImpl implements MyOrderService {
 
     @Override
     @Transactional(propagation = Propagation.SUPPORTS)
-    public boolean checkUserOrder(String userId, String orderId) {
+    public Orders checkUserOrder(String userId, String orderId) {
         Orders order = new Orders();
         order.setId(orderId);
         order.setUserId(userId);
 
         Orders orders = ordersMapper.selectOne(order);
 
-        return orders == null ? false : true;
+        return orders;
     }
 
     /**

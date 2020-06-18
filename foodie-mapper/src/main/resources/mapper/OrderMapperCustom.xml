@@ -41,7 +41,7 @@
             AND os.order_status = #{orderStatus}
         </if>
         ORDER BY
-            o.updated_time ASC
+            o.updated_time DESC
     </select>
 
     <select id="queryOrderItem" parameterType="java.lang.String" resultType="com.pacee1.pojo.vo.MySubOrderItemVO">

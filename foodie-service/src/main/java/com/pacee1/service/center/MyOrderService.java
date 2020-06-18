@@ -1,5 +1,6 @@
 package com.pacee1.service.center;
 
+import com.pacee1.pojo.Orders;
 import com.pacee1.pojo.Users;
 import com.pacee1.pojo.bo.center.CenterUserBO;
 import com.pacee1.utils.PagedGridResult;
@@ -29,6 +30,6 @@ public interface MyOrderService {
 
     void updateDeleteOrder(String orderId);
 
-    boolean checkUserOrder(String userId,String orderId);
+    Orders checkUserOrder(String userId, String orderId);
 
 }

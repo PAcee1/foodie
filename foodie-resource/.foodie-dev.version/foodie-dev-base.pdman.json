@@ -1039,7 +1039,7 @@
               "chnname": "商品规格id"
             },
             {
-              "name": "sepc_name",
+              "name": "spec_name",
               "type": "DefaultString",
               "remark": "可为空",
               "chnname": "规格名称"

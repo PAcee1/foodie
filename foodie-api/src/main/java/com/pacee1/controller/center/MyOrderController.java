@@ -1,5 +1,6 @@
 package com.pacee1.controller.center;
 
+import com.pacee1.pojo.Orders;
 import com.pacee1.pojo.bo.UserAddressBO;
 import com.pacee1.service.center.MyOrderService;
 import com.pacee1.utils.PagedGridResult;
@@ -69,8 +70,8 @@ public class MyOrderController {
             @ApiParam(name = "userId",value = "用户id",required = true)
             @RequestParam String userId){
         // 校验订单与用户是否匹配
-        boolean check = myOrderService.checkUserOrder(userId, orderId);
-        if(!check){
+        Orders orders = myOrderService.checkUserOrder(userId, orderId);
+        if(orders == null){
             return ResponseResult.errorMsg("非法请求");
         }
 
@@ -87,8 +88,8 @@ public class MyOrderController {
             @ApiParam(name = "userId",value = "用户id",required = true)
             @RequestParam String userId){
         // 校验订单与用户是否匹配
-        boolean check = myOrderService.checkUserOrder(userId, orderId);
-        if(!check){
+        Orders orders = myOrderService.checkUserOrder(userId, orderId);
+        if(orders == null){
             return ResponseResult.errorMsg("非法请求");
         }
 
