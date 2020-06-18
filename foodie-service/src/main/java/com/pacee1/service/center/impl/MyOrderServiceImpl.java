@@ -13,6 +13,7 @@ import com.pacee1.pojo.Orders;
 import com.pacee1.pojo.Users;
 import com.pacee1.pojo.bo.center.CenterUserBO;
 import com.pacee1.pojo.vo.MyOrdersVO;
+import com.pacee1.pojo.vo.OrderStatusCountsVO;
 import com.pacee1.service.center.CenterUserService;
 import com.pacee1.service.center.MyOrderService;
 import com.pacee1.utils.PagedGridResult;
@@ -102,6 +103,43 @@ public class MyOrderServiceImpl implements MyOrderService {
         Orders orders = ordersMapper.selectOne(order);
 
         return orders;
+    }
+
+    @Override
+    @Transactional(propagation = Propagation.SUPPORTS)
+    public OrderStatusCountsVO queryOrderStatusCounts(String userId) {
+        Map<String,Object> paramMap = new HashMap<>();
+        paramMap.put("userId",userId);
+        paramMap.put("orderStatus",OrderStatusEnum.WAIT_PAY.type);
+        OrderStatusCountsVO countsVO = new OrderStatusCountsVO();
+        // 待付款
+        Integer waitPayCounts = orderMapperCustom.queryOrderCountByStatus(paramMap);
+        countsVO.setWaitPayCounts(waitPayCounts);
+        // 待发货
+        paramMap.put("orderStatus",OrderStatusEnum.WAIT_DELIVER.type);
+        Integer waitDeliverCounts = orderMapperCustom.queryOrderCountByStatus(paramMap);
+        countsVO.setWaitDeliverCounts(waitDeliverCounts);
+        // 待收货
+        paramMap.put("orderStatus",OrderStatusEnum.WAIT_RECEIVE.type);
+        Integer waitReceiveCounts = orderMapperCustom.queryOrderCountByStatus(paramMap);
+        countsVO.setWaitReceiveCounts(waitReceiveCounts);
+        // 待评价
+        paramMap.put("orderStatus",OrderStatusEnum.SUCCESS.type);
+        paramMap.put("isComment",YesOrNo.NO.type);
+        Integer waitCommentCounts = orderMapperCustom.queryOrderCountByStatus(paramMap);
+        countsVO.setWaitCommentCounts(waitCommentCounts);
+
+        return countsVO;
+    }
+
+    @Override
+    @Transactional(propagation = Propagation.SUPPORTS)
+    public PagedGridResult queryOrderTrend(String userId,Integer page,Integer pagesize) {
+        PageHelper.startPage(page,pagesize);
+
+        List<OrderStatus> orderStatuses = orderMapperCustom.queryOrderTrend(userId);
+
+        return setPagedGridResult(orderStatuses,page);
     }
 
     /**

@@ -2,12 +2,14 @@ package com.pacee1.controller.center;
 
 import com.pacee1.pojo.Orders;
 import com.pacee1.pojo.bo.UserAddressBO;
+import com.pacee1.pojo.vo.OrderStatusCountsVO;
 import com.pacee1.service.center.MyOrderService;
 import com.pacee1.utils.PagedGridResult;
 import com.pacee1.utils.ResponseResult;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -98,4 +100,41 @@ public class MyOrderController {
         return ResponseResult.ok();
     }
 
+    @PostMapping("/statusCounts")
+    @ApiOperation(value = "订单状态查询接口",notes = "订单状态查询接口")
+    public ResponseResult statusCounts(
+            @ApiParam(name = "userId",value = "用户id",required = true)
+            @RequestParam String userId){
+        if(StringUtils.isBlank(userId)){
+            return ResponseResult.errorMsg("用户未登录");
+        }
+
+        OrderStatusCountsVO countsVO = myOrderService.queryOrderStatusCounts(userId);
+
+        return ResponseResult.ok(countsVO);
+    }
+
+    @PostMapping("/trend")
+    @ApiOperation(value = "查询订单动向列表",notes = "查询订单动向列表")
+    public ResponseResult trend(
+            @ApiParam(name = "userId",value = "用户id",required = true)
+            @RequestParam String userId,
+            @ApiParam(name = "page",value = "当前页",required = false)
+            @RequestParam Integer page,
+            @ApiParam(name = "pageSize",value = "每页数量",required = false)
+            @RequestParam Integer pageSize){
+        if(userId == null){
+            return ResponseResult.errorMsg("用户不存在");
+        }
+        if(page == null){
+            page = 1;
+        }
+        if(pageSize == null){
+            pageSize = 10;
+        }
+
+        PagedGridResult result = myOrderService.queryOrderTrend(userId, page, pageSize);
+
+        return ResponseResult.ok(result);
+    }
 }
