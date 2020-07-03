@@ -28,6 +28,7 @@ public class MvcConfig implements WebMvcConfigurer {
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         registry.addResourceHandler("/**") // 所有路径
                 .addResourceLocations("classpath:/META-INF/resources/") // Swagger2的映射
-                .addResourceLocations("file:E:/pic/foodie-image/"); // 添加图片本地映射
+                .addResourceLocations("file:E:/pic/foodie-image/") // 添加图片本地映射
+                .addResourceLocations("file:/file/image/");
     }
 }

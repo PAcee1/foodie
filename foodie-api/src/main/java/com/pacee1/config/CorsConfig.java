@@ -23,6 +23,10 @@ public class CorsConfig {
         CorsConfiguration corsConfiguration = new CorsConfiguration();
         // 允许的路径
         corsConfiguration.addAllowedOrigin("http://localhost:8080");
+        corsConfiguration.addAllowedOrigin("http://www.enbuys.com:8080");
+        corsConfiguration.addAllowedOrigin("http://www.enbuys.com");
+        corsConfiguration.addAllowedOrigin("http://center.enbuys.com:8080");
+        corsConfiguration.addAllowedOrigin("http://center.enbuys.com");
         // 允许cookie
         corsConfiguration.setAllowCredentials(true);
         // 允许的方法

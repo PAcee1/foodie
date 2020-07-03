@@ -1,6 +1,5 @@
 package com.pacee1.controller.center;
 
-import com.pacee1.constant.CommonConstant;
 import com.pacee1.pojo.Users;
 import com.pacee1.pojo.bo.center.CenterUserBO;
 import com.pacee1.service.center.CenterUserService;
@@ -13,6 +12,7 @@ import io.swagger.annotations.ApiParam;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.*;
@@ -21,7 +21,10 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
-import java.io.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,6 +38,11 @@ import java.util.Map;
 @RequestMapping("userInfo")
 @Api(value = "用户相关接口",tags = "用户相关接口")
 public class CenterUserController {
+
+    @Value("${pacee1.image.faceLocation}")
+    private String IMAGE_USER_FACE_LOCATION;
+    @Value("${pacee1.image.serverUrl}")
+    private String IMAGE_SERVER_URL;
 
     @Autowired
     private CenterUserService centerUserService;
@@ -81,7 +89,7 @@ public class CenterUserController {
         }
 
         // 图片保存本地地址
-        String fileSpace = CommonConstant.IMAGE_USER_FACE_LOCATION;
+        String fileSpace = IMAGE_USER_FACE_LOCATION;
         // 在space基础上，以每个用户的id创建文件夹，保存到各个文件夹中
         String uploadFilePrefix = File.separator + userId;
         // 保存文件新名称 face-userId.jpg
@@ -136,7 +144,7 @@ public class CenterUserController {
 
         // 更新用户信息到数据库
         // 组装图片网络路径
-        String faceUrl = CommonConstant.IMAGE_SERVER_URL + userId + File.separator + newFileName;
+        String faceUrl = IMAGE_SERVER_URL + userId + File.separator + newFileName;
         Users users = centerUserService.updateUserFace(userId, faceUrl);
 
         // TODO redis，分布式会话
