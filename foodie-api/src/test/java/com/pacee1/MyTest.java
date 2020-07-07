@@ -2,7 +2,9 @@ package com.pacee1;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.test.context.junit4.SpringRunner;
 
 /**
@@ -16,8 +18,16 @@ import org.springframework.test.context.junit4.SpringRunner;
 @RunWith(SpringRunner.class)
 public class MyTest {
 
+    @Autowired
+    private RedisTemplate redisTemplate;
+
     @Test
     public void test(){
+        redisTemplate.opsForValue().set("name","pace");
 
+        Object name = redisTemplate.opsForValue().get("name");
+        System.out.println(name);
+
+        redisTemplate.delete("name");
     }
 }

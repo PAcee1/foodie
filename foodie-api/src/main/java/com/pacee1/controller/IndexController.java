@@ -12,6 +12,7 @@ import com.pacee1.service.CategoryService;
 import com.pacee1.service.UserService;
 import com.pacee1.utils.CookieUtils;
 import com.pacee1.utils.JsonUtils;
+import com.pacee1.utils.RedisOperator;
 import com.pacee1.utils.ResponseResult;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -23,6 +24,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -41,11 +43,28 @@ public class IndexController {
     private CarouselService carouselService;
     @Autowired
     private CategoryService categoryService;
+    @Autowired
+    private RedisOperator redisOperator;
 
     @GetMapping("/carousel")
     @ApiOperation(value = "轮播图查询",notes = "获取首页轮播图列表")
     public ResponseResult carousel(){
-        List<Carousel> carousels = carouselService.queryAll(YesOrNo.YES.type);
+        // 引入Redis，缓存轮播图信息
+        // 判断Redis是否存在
+        String carouselStr = redisOperator.get("carousel");
+        List<Carousel> carousels = null;
+        if(StringUtils.isBlank(carouselStr)) {
+            carousels = carouselService.queryAll(YesOrNo.YES.type);
+            // 默认设置一天的过期时间
+            redisOperator.set("carousel", JsonUtils.objectToJson(carousels),60*60*24);
+        }else {
+            carousels = JsonUtils.jsonToList(carouselStr, Carousel.class);
+        }
+        /**
+         * 问题：这里设置默认一天过期时间，如何改造？
+         * 1.创建后台管理系统，一旦轮播图修改，缓存重置
+         * 2.轮播图表添加过期时间字段，进行循环设置缓存
+         */
         return ResponseResult.ok(carousels);
     }
 
@@ -56,7 +75,16 @@ public class IndexController {
     @GetMapping("/cats")
     @ApiOperation(value = "查询所有一级分类",notes = "查询所有一级分类")
     public ResponseResult cats(){
-        List<Category> categories = categoryService.queryAllRootLevelCat();
+        // 引入缓存
+        String catsStr = redisOperator.get("cats");
+        List<Category> categories = null;
+        if(StringUtils.isBlank(catsStr)) {
+            categories = categoryService.queryAllRootLevelCat();
+            // 默认设置一天的过期时间
+            redisOperator.set("cats", JsonUtils.objectToJson(categories),60*60*24);
+        }else {
+            categories = JsonUtils.jsonToList(catsStr, Category.class);
+        }
         return ResponseResult.ok(categories);
     }
 
@@ -65,10 +93,21 @@ public class IndexController {
     public ResponseResult subCat(
             @ApiParam(name = "fatherId",value = "一级分类id",required = true)
             @PathVariable Integer fatherId){
+        // 引入缓存
         if(fatherId == null){
             return ResponseResult.errorMsg("分类不存在");
         }
-        List<CategoryVO> result = categoryService.getSubCatList(fatherId);
+        // key 为 subCat + fatherId
+        String subCatKey = "subCat:" + fatherId;
+        String subCatStr = redisOperator.get("subCatKey");
+        List<CategoryVO> result = null;
+        if(StringUtils.isBlank(subCatStr)) {
+            result = categoryService.getSubCatList(fatherId);
+            // 默认设置一天的过期时间
+            redisOperator.set(subCatKey, JsonUtils.objectToJson(result),60*60*24);
+        }else {
+            result = JsonUtils.jsonToList(subCatStr, CategoryVO.class);
+        }
         return ResponseResult.ok(result);
     }
 

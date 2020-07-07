@@ -1,5 +1,9 @@
 package com.pacee1.pojo.vo;
 
+import com.pacee1.pojo.bo.ShopcartBO;
+
+import java.util.List;
+
 /**
  * @Created by pace
  * @Date 2020/6/12 15:13
@@ -11,6 +15,8 @@ public class OrderVO {
 
     private String orderId;
     private MerchantOrderVO merchantOrderVO;
+    // 保存Redis需要清除的商品集合
+    private List<ShopcartBO> needRemoveList;
 
     public String getOrderId() {
         return orderId;
@@ -26,5 +32,13 @@ public class OrderVO {
 
     public void setMerchantOrderVO(MerchantOrderVO merchantOrderVO) {
         this.merchantOrderVO = merchantOrderVO;
+    }
+
+    public List<ShopcartBO> getNeedRemoveList() {
+        return needRemoveList;
+    }
+
+    public void setNeedRemoveList(List<ShopcartBO> needRemoveList) {
+        this.needRemoveList = needRemoveList;
     }
 }

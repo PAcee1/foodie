@@ -2,6 +2,7 @@ package com.pacee1.service;
 
 import com.pacee1.pojo.*;
 import com.pacee1.pojo.bo.OrderBO;
+import com.pacee1.pojo.bo.ShopcartBO;
 import com.pacee1.pojo.vo.CommentLevelCountsVO;
 import com.pacee1.pojo.vo.OrderVO;
 import com.pacee1.pojo.vo.ShopcartVO;
@@ -16,7 +17,7 @@ import java.util.List;
  */
 public interface OrderService {
 
-    OrderVO create(OrderBO orderBO);
+    OrderVO create(OrderBO orderBO,List<ShopcartBO> shopcartList);
 
     /**
      * 更新订单支付状态

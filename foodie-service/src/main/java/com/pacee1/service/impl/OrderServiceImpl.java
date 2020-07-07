@@ -7,6 +7,7 @@ import com.pacee1.mapper.OrderStatusMapper;
 import com.pacee1.mapper.OrdersMapper;
 import com.pacee1.pojo.*;
 import com.pacee1.pojo.bo.OrderBO;
+import com.pacee1.pojo.bo.ShopcartBO;
 import com.pacee1.pojo.vo.MerchantOrderVO;
 import com.pacee1.pojo.vo.OrderVO;
 import com.pacee1.service.AddressService;
@@ -19,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -48,7 +50,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional(propagation = Propagation.REQUIRED)
-    public OrderVO create(OrderBO orderBO) {
+    public OrderVO create(OrderBO orderBO,List<ShopcartBO> shopcartList) {
         // 0.订单信息
         String userId = orderBO.getUserId();
         Integer payMethod = orderBO.getPayMethod();
@@ -83,6 +85,8 @@ public class OrderServiceImpl implements OrderService {
         Integer realPayAmount = 0;
 
         // 2.维护订单商品表并减少库存
+        // 商品集合保存，用于清除购物车缓存
+        List<ShopcartBO> needRemoveList = new ArrayList<>();
         // 规格信息循环
         String[] itemSpecs = itemSpecIds.split(",");
         for (String itemSpecId : itemSpecs) {
@@ -93,8 +97,12 @@ public class OrderServiceImpl implements OrderService {
             // 查询商品信息
             Items items = itemService.queryItems(itemsSpec.getItemId());
 
-            // TODO 从Redis取购物车数据，获取商品数量
-            Integer buyCounts = 1;
+            // 从Redis取购物车数据，获取商品数量
+            ShopcartBO item = getBuyCountsFromCart(shopcartList,itemSpecId);;
+            // 保存该数据，用于后续清楚购物车缓存
+            needRemoveList.add(item);
+
+            Integer buyCounts = Integer.valueOf(item.getBuyCounts());
             String orderItemId = sid.nextShort();
             OrderItems orderItem = new OrderItems();
             orderItem.setBuyCounts(buyCounts);
@@ -140,6 +148,7 @@ public class OrderServiceImpl implements OrderService {
         OrderVO orderVO = new OrderVO();
         orderVO.setOrderId(orderId);
         orderVO.setMerchantOrderVO(merchantOrderVO);
+        orderVO.setNeedRemoveList(needRemoveList);
         return orderVO;
     }
 
@@ -176,5 +185,20 @@ public class OrderServiceImpl implements OrderService {
                 orderStatusMapper.updateByPrimaryKeySelective(waitPayOrder);
             }
         }
+    }
+
+    /**
+     * 从购物车中获取目标商品的购买数量
+     * @param shopcartList
+     * @param itemSpecId
+     * @return
+     */
+    private ShopcartBO getBuyCountsFromCart(List<ShopcartBO> shopcartList, String itemSpecId) {
+        for (ShopcartBO shopcartBO : shopcartList) {
+            if(shopcartBO.getSpecId().equals(itemSpecId)){
+                return shopcartBO;
+            }
+        }
+        return null;
     }
 }

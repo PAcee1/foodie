@@ -4,14 +4,18 @@ import com.pacee1.enums.OrderStatusEnum;
 import com.pacee1.enums.PayMethod;
 import com.pacee1.pojo.OrderStatus;
 import com.pacee1.pojo.bo.OrderBO;
+import com.pacee1.pojo.bo.ShopcartBO;
 import com.pacee1.pojo.vo.MerchantOrderVO;
 import com.pacee1.pojo.vo.OrderVO;
 import com.pacee1.service.OrderService;
 import com.pacee1.utils.CookieUtils;
+import com.pacee1.utils.JsonUtils;
+import com.pacee1.utils.RedisOperator;
 import com.pacee1.utils.ResponseResult;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
@@ -23,6 +27,7 @@ import org.springframework.web.client.RestTemplate;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.List;
 
 /**
  * @author pace
@@ -52,6 +57,8 @@ public class OrderController {
     private OrderService orderService;
     @Autowired
     private RestTemplate restTemplate;
+    @Autowired
+    private RedisOperator redisOperator;
 
     @PostMapping("/create")
     @ApiOperation(value = "创建订单",notes = "创建订单接口")
@@ -66,15 +73,28 @@ public class OrderController {
        }
 
         /**
+         * 获取购物车缓存
+         */
+        // 从购物车删除商品
+        String shopcatStr = redisOperator.get("shopcart:" + orderBO.getUserId());
+        // 判断缓存是否存在
+        if(StringUtils.isBlank(shopcatStr)){
+            return ResponseResult.errorMsg("购物数据出错，无购物车");
+        }
+        List<ShopcartBO> shopcartList = JsonUtils.jsonToList(shopcatStr, ShopcartBO.class);
+
+        /**
          * 1.创建订单
          */
-        OrderVO orderVO = orderService.create(orderBO);
+        OrderVO orderVO = orderService.create(orderBO,shopcartList);
         String orderId = orderVO.getOrderId();
 
         /**
          * 2.清除购物车中数据
          */
-        // TODO 整合redis后，从redis获取购物车数据，对商品清除，同步cookie
+        // 从redis获取购物车数据，对商品清除，同步cookie
+        shopcartList.removeAll(orderVO.getNeedRemoveList());
+        redisOperator.set("shopcart:" + orderBO.getUserId(),JsonUtils.objectToJson(shopcartList));
         // 当前直接重置cookie的购物车
         CookieUtils.setCookie(request,response,"shopcart","",true);
 

@@ -1,10 +1,12 @@
 package com.pacee1.controller;
 
 import com.pacee1.pojo.Users;
+import com.pacee1.pojo.bo.ShopcartBO;
 import com.pacee1.pojo.bo.UserBO;
 import com.pacee1.service.UserService;
 import com.pacee1.utils.CookieUtils;
 import com.pacee1.utils.JsonUtils;
+import com.pacee1.utils.RedisOperator;
 import com.pacee1.utils.ResponseResult;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -14,6 +16,8 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author pace
@@ -29,6 +33,8 @@ public class PassportController {
 
     @Autowired
     private UserService userService;
+    @Autowired
+    private RedisOperator redisOperator;
 
     @GetMapping("/usernameIsExist")
     @ApiOperation(value = "用户名校验是否存在",notes = "用户名校验是否存在")
@@ -112,6 +118,9 @@ public class PassportController {
         CookieUtils.setCookie(request,response,"user",
                 JsonUtils.objectToJson(user),true);
 
+        // 同步购物车数据
+        SyncShopcart(user.getId(),request,response);
+
         return ResponseResult.ok(user);
     }
 
@@ -124,9 +133,77 @@ public class PassportController {
         // 1.清除cookie
         CookieUtils.deleteCookie(request,response,"user");
 
-        // TODO 清除购物车，清除分布式会话
+        // TODO 清除分布式会话
+        // 清除cookie购物车
+        CookieUtils.deleteCookie(request,response,"shopcart");
 
         return ResponseResult.ok();
+    }
+
+    /**
+     * 同步cookie和redis购物车
+     * @param userId
+     */
+    private void SyncShopcart(String userId,
+                              HttpServletRequest request,
+                              HttpServletResponse response){
+        /**
+         * 同步逻辑：
+         * 1.redis没有购物车，cookie有：将cookie的直接放到redis中
+         *                  cookie没有：不做处理
+         * 2.redis有购物车，cookie有：
+         *                      商品在redis，不在cookie，同步到cookie
+         *                      商品在cookie，不在redis，同步到redis
+         *                      商品都存在，以cookie的数量为准（参考京东）
+         *                cookie没有：将redis商品数据同步到cookie中
+         */
+        // 获取redis
+        String redisShopcart = redisOperator.get("shopcart:" + userId);
+        // 获取cookie
+        String cookieShopcart = CookieUtils.getCookieValue(request, "shopcart", true);
+
+        if(StringUtils.isBlank(redisShopcart)){
+            if(!StringUtils.isBlank(cookieShopcart)){
+                // redis不存在，cookie存在，同步到redis
+                redisOperator.set("shopcart:" + userId,cookieShopcart);
+            }
+        }else {
+            if(StringUtils.isBlank(cookieShopcart)){
+                // redis存在，cookie不存在，同步到cookie
+                CookieUtils.setCookie(request,response,"shopcart", redisShopcart,true);
+            }else {
+                // 都存在，进行合并
+                List<ShopcartBO> shopcartListRedis = JsonUtils.jsonToList(redisShopcart, ShopcartBO.class);
+                List<ShopcartBO> shopcartListCookie = JsonUtils.jsonToList(cookieShopcart, ShopcartBO.class);
+                
+                // 存放cookie需要删除的商品
+                List<ShopcartBO> needRemoveList = new ArrayList<>();
+                
+                // 循环寻找相同商品
+                for (ShopcartBO scRedis : shopcartListRedis) {
+                    String specIdRedis = scRedis.getSpecId();
+                    for (ShopcartBO scCookie : shopcartListCookie) {
+                        String specIdCookie = scCookie.getSpecId();
+                        
+                        if(specIdRedis.equals(specIdRedis)){
+                            // 将Cookie商品数量覆盖Redis商品的数量
+                            scRedis.setBuyCounts(scCookie.getBuyCounts());
+                            // 将cookie相同商品添加到待删除商品集合 , 方便后期合并
+                            needRemoveList.add(scCookie);
+                        }
+                    }
+                }
+                
+                // Cookie删除商品
+                shopcartListCookie.removeAll(needRemoveList);
+                
+                // 合并商品，同步到redis和cookie
+                shopcartListRedis.addAll(shopcartListCookie);
+                String mergeShopcart = JsonUtils.objectToJson(shopcartListRedis);
+                redisOperator.set("shopcart:" + userId,mergeShopcart);
+                CookieUtils.setCookie(request,response,"shopcart", mergeShopcart,true);
+            }
+        }
     }
 
     private Users setUserNull(Users user) {
