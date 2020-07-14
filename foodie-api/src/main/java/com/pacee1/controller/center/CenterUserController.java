@@ -2,15 +2,18 @@ package com.pacee1.controller.center;
 
 import com.pacee1.pojo.Users;
 import com.pacee1.pojo.bo.center.CenterUserBO;
+import com.pacee1.pojo.vo.UsersVO;
 import com.pacee1.service.center.CenterUserService;
 import com.pacee1.utils.CookieUtils;
 import com.pacee1.utils.JsonUtils;
+import com.pacee1.utils.RedisOperator;
 import com.pacee1.utils.ResponseResult;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.validation.BindingResult;
@@ -28,6 +31,7 @@ import java.io.InputStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * @Created by pace
@@ -46,6 +50,8 @@ public class CenterUserController {
 
     @Autowired
     private CenterUserService centerUserService;
+    @Autowired
+    private RedisOperator redisOperator;
 
     @PostMapping("/update")
     @ApiOperation(value = "修改用户信息",notes = "修改用户信息接口")
@@ -67,11 +73,19 @@ public class CenterUserController {
 
         Users users = centerUserService.updateUserInfo(userId,centerUserBO);
 
-        // TODO redis，分布式会话
-        // 设置cookie 清空用户敏感信息
+        // 清空用户敏感信息
         users = setUserNull(users);
+
+        // 保存Session到Redis
+        String userToken = UUID.randomUUID().toString().trim();
+        redisOperator.set("redis_user_token:" + users.getId(),userToken);
+        UsersVO usersVO = new UsersVO();
+        BeanUtils.copyProperties(users,usersVO);
+        usersVO.setUserUniqueToken(userToken);
+
+        // 设置cookie
         CookieUtils.setCookie(request,response,"user",
-                JsonUtils.objectToJson(users),true);
+                JsonUtils.objectToJson(usersVO),true);
 
         return ResponseResult.ok();
     }
@@ -147,11 +161,19 @@ public class CenterUserController {
         String faceUrl = IMAGE_SERVER_URL + userId + File.separator + newFileName;
         Users users = centerUserService.updateUserFace(userId, faceUrl);
 
-        // TODO redis，分布式会话
-                // 设置cookie 清空用户敏感信息
-                users = setUserNull(users);
+        // 清空用户敏感信息
+        users = setUserNull(users);
+
+        // 保存Session到Redis
+        String userToken = UUID.randomUUID().toString().trim();
+        redisOperator.set("redis_user_token:" + users.getId(),userToken);
+        UsersVO usersVO = new UsersVO();
+        BeanUtils.copyProperties(users,usersVO);
+        usersVO.setUserUniqueToken(userToken);
+
+        // 设置cookie
         CookieUtils.setCookie(request,response,"user",
-                JsonUtils.objectToJson(users),true);
+                JsonUtils.objectToJson(usersVO),true);
 
         return ResponseResult.ok();
     }

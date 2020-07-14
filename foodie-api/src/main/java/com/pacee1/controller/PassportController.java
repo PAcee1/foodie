@@ -3,6 +3,7 @@ package com.pacee1.controller;
 import com.pacee1.pojo.Users;
 import com.pacee1.pojo.bo.ShopcartBO;
 import com.pacee1.pojo.bo.UserBO;
+import com.pacee1.pojo.vo.UsersVO;
 import com.pacee1.service.UserService;
 import com.pacee1.utils.CookieUtils;
 import com.pacee1.utils.JsonUtils;
@@ -11,6 +12,7 @@ import com.pacee1.utils.ResponseResult;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,6 +20,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * @author pace
@@ -82,14 +85,25 @@ public class PassportController {
 
         // 2.保存
         Users user = userService.createUser(userBO);
-
-        // 3.设置cookie
         // 首先清空用户敏感信息
         user = setUserNull(user);
-        CookieUtils.setCookie(request,response,"user",
-                JsonUtils.objectToJson(user),true);
 
-        return ResponseResult.ok(user);
+        // 3.保存Session到Redis
+        // 创建Token，使用UUID
+        String userToken = UUID.randomUUID().toString().trim();
+        redisOperator.set("redis_user_token:" + user.getId(),userToken);
+        UsersVO usersVO = new UsersVO();
+        BeanUtils.copyProperties(user,usersVO);
+        usersVO.setUserUniqueToken(userToken);
+
+        // 4.设置cookie
+        CookieUtils.setCookie(request,response,"user",
+                JsonUtils.objectToJson(usersVO),true);
+
+        // 同步购物车数据
+        SyncShopcart(user.getId(),request,response);
+
+        return ResponseResult.ok();
     }
 
     @PostMapping("/login")
@@ -111,12 +125,19 @@ public class PassportController {
         if(user == null){
             return  ResponseResult.errorMsg("用户名或密码错误");
         }
-
-        // 3.设置cookie
         // 首先清空用户敏感信息
         user = setUserNull(user);
+
+        // 创建Token，使用UUID
+        String userToken = UUID.randomUUID().toString().trim();
+        redisOperator.set("redis_user_token:" + user.getId(),userToken);
+        UsersVO usersVO = new UsersVO();
+        BeanUtils.copyProperties(user,usersVO);
+        usersVO.setUserUniqueToken(userToken);
+
+        // 4.设置cookie
         CookieUtils.setCookie(request,response,"user",
-                JsonUtils.objectToJson(user),true);
+                JsonUtils.objectToJson(usersVO),true);
 
         // 同步购物车数据
         SyncShopcart(user.getId(),request,response);
@@ -133,7 +154,9 @@ public class PassportController {
         // 1.清除cookie
         CookieUtils.deleteCookie(request,response,"user");
 
-        // TODO 清除分布式会话
+        // 清除分布式会话
+        redisOperator.del("redis_user_token:" + userId);
+
         // 清除cookie购物车
         CookieUtils.deleteCookie(request,response,"shopcart");
 
@@ -159,6 +182,7 @@ public class PassportController {
          */
         // 获取redis
         String redisShopcart = redisOperator.get("shopcart:" + userId);
+        
         // 获取cookie
         String cookieShopcart = CookieUtils.getCookieValue(request, "shopcart", true);
 
