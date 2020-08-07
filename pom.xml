@@ -20,6 +20,7 @@
         <module>foodie-mapper</module>
         <module>foodie-service</module>
         <module>foodie-api</module>
+        <module>foodie-search</module>
     </modules>
 
     <packaging>pom</packaging>
