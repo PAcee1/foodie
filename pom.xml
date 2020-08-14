@@ -21,6 +21,7 @@
         <module>foodie-service</module>
         <module>foodie-api</module>
         <module>foodie-search</module>
+        <module>foodie-fs</module>
     </modules>
 
     <packaging>pom</packaging>

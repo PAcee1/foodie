@@ -25,7 +25,7 @@ public class CenterController {
     @Autowired
     private CenterUserService centerUserService;
 
-    @GetMapping("/userInfo")
+    @PostMapping("/userInfo")
     @ApiOperation(value = "获取用户信息",notes = "获取用户信息接口")
     public ResponseResult userInfo(
             @ApiParam(name = "userId",value = "用户id",required = true)
