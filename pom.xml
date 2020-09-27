@@ -140,6 +140,13 @@
             <version>3.9.1</version>
         </dependency>
 
+        <!-- redisson redis高级客户端 -->
+        <dependency>
+            <groupId>org.redisson</groupId>
+            <artifactId>redisson-spring-boot-starter</artifactId>
+            <version>3.11.2</version>
+        </dependency>
+
     </dependencies>
 
 </project>

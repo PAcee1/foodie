@@ -67,10 +67,10 @@ pagehelper:
 # 支付相关配置
 pacee1:
  image:
-  faceLocation: E:\\pic\\foodie-image
-  serverUrl: http://localhost:8088/
+  faceLocation: /file/image/foodie/faces
+  serverUrl: http://api.enbuys.com:8088/foodie/faces/
  pay:
-  returnUrl: http://raqpsv.natappfree.cc/orders/notifyMerchantOrderPaid
+  returnUrl: http://api.enbuys.com:8088/orders/notifyMerchantOrderPaid
   paymentUrl: http://payment.t.mukewang.com/foodie-payment/payment/createMerchantOrder
 
 

@@ -16,6 +16,8 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.apache.commons.lang3.StringUtils;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
@@ -27,7 +29,10 @@ import org.springframework.web.client.RestTemplate;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author pace
@@ -59,6 +64,17 @@ public class OrderController {
     private RestTemplate restTemplate;
     @Autowired
     private RedisOperator redisOperator;
+    @Autowired
+    private RedissonClient redissonClient;
+
+    @PostMapping("/getOrderToken")
+    @ApiOperation(value = "获取订单Token",notes = "获取订单Token")
+    public ResponseResult getOrderToken(HttpSession session){
+        String token = UUID.randomUUID().toString();
+        // 使用Session来判断是否为统一用户，这样在不同浏览器下单也可以
+        redisOperator.set("ORDER_TOKEN_" + session.getId(),token);
+        return ResponseResult.ok(token);
+    }
 
     @PostMapping("/create")
     @ApiOperation(value = "创建订单",notes = "创建订单接口")
@@ -66,11 +82,34 @@ public class OrderController {
             @ApiParam(name = "orderBO",value = "订单信息",required = true)
             @RequestBody OrderBO orderBO,
             HttpServletRequest request,
-            HttpServletResponse response){
-       if(orderBO.getPayMethod() != PayMethod.WX.type &&
-       orderBO.getPayMethod() != PayMethod.ZFB.type){
+            HttpServletResponse response,
+            HttpSession session){
+        // 幂等性校验 ， 加分布式锁
+        String orderTokenKey = "ORDER_TOKEN_" + session.getId();
+
+        RLock lock = redissonClient.getLock("orderTokenKey");
+        // 超时时间5秒
+        lock.lock(5, TimeUnit.SECONDS);
+        try{
+            String orderToken = redisOperator.get(orderTokenKey);
+            if(StringUtils.isBlank(orderToken)){
+                throw new RuntimeException("orderToken不存在");
+            }
+            if(!orderToken.equals(orderBO.getToken())){
+                throw new RuntimeException("orderToken不正确");
+            }
+            // 删除Token
+            redisOperator.del(orderTokenKey);
+        }finally {
+            // 解锁
+            lock.unlock();
+        }
+
+
+        if(orderBO.getPayMethod() != PayMethod.WX.type &&
+        orderBO.getPayMethod() != PayMethod.ZFB.type){
            return ResponseResult.errorMsg("支付方式不支持");
-       }
+        }
 
         /**
          * 获取购物车缓存
