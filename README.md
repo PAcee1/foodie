@@ -1,6 +1,10 @@
 ## 天天吃货商城项目
 
-开发中，未完待续
+**此版本为单体项目**
+
+使用技术为：SpringBoot，Redis，Mysql，MyBatis，ElasticSearch
+
+**该项目的微服务版本github地址为：**https://github.com/PAcee1/foodie-cloud
 
 ### 项目介绍
 
